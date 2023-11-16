@@ -1,0 +1,81 @@
+import pygame
+import imageio
+import random
+import sys
+
+pygame.init()
+
+largura_tela = 500
+altura_tela = 500
+tela = pygame.display.set_mode((largura_tela, altura_tela))
+pygame.display.set_caption("Jogo de Probabilidade")
+
+# Definição da fonte para exibir os pontos na tela
+pygame.font.init()
+fonte = pygame.font.SysFont(None, 36)
+
+# Inicialização dos pontos
+pontos_cara = 0
+pontos_coroa = 0
+pontos_lendario = 0
+
+def lancamento_moeda():
+    resultado = random.choices(['cara', 'coroa', 'em pé'], weights=[49.95, 49.95, 0.10], k=1)
+    return resultado[0]
+
+rodando = True
+animacao_moeda = False
+tempo_animacao = 35  # Tempo de duração da animação em frames
+contador_animacao = 0
+
+# Carregar o GIF como uma lista de quadros
+gif = imageio.mimread('toss.gif', 'GIF')
+frames = [pygame.image.frombuffer(frame, (gif[0].shape[1], gif[0].shape[0]), 'RGB') for frame in gif]
+
+# Coordenadas para centralizar a moeda na tela
+posicao_x = largura_tela // 2 - frames[0].get_width() // 2
+posicao_y = altura_tela // 2 - frames[0].get_height() // 2
+
+while rodando:
+    for evento in pygame.event.get():
+        if evento.type == pygame.QUIT:
+            rodando = False
+        elif evento.type == pygame.KEYDOWN:
+            if evento.key == pygame.K_SPACE and not animacao_moeda:
+                resultado = lancamento_moeda()
+
+                if resultado == 'cara':
+                    pontos_cara += 1
+                elif resultado == 'coroa':
+                    pontos_coroa += 1
+                else:
+                    pontos_lendario += 1
+
+                animacao_moeda = True
+
+    tela.fill((255, 255, 255))
+
+    if animacao_moeda:
+        # Exibir os quadros do GIF como uma animação com tempo ajustado
+        if contador_animacao < len(frames) * tempo_animacao:
+            frame_atual = contador_animacao // tempo_animacao
+            tela.blit(frames[frame_atual], (posicao_x, posicao_y))
+            contador_animacao += 1
+        else:
+            animacao_moeda = False
+            contador_animacao = 0
+
+    # Exibir os resultados na tela
+    texto_cara = fonte.render(f'Cara: {pontos_cara}', True, (0, 0, 0))
+    tela.blit(texto_cara, (20, 50))
+
+    texto_coroa = fonte.render(f'Coroa: {pontos_coroa}', True, (0, 0, 0))
+    tela.blit(texto_coroa, (20, 100))
+
+    texto_lendario = fonte.render(f'Lendário: {pontos_lendario}', True, (255, 0, 0))
+    tela.blit(texto_lendario, (20, 150))
+
+    pygame.display.flip()
+
+pygame.quit()
+sys.exit()
